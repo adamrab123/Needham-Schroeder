@@ -6,9 +6,9 @@ CSCI 4230: Cryptography and Network Security, Homework 2
 
 This code was written in Python 3. There are 3 Python files in this repository:
 
-* server.py: This will serve as our main server for this cryptosystem, and will act as our Key Distribution Center (KDC). The server will have the ability to use Diffie-Hellman to create trusted session keys with each client that connects to it, as well as perform the Nedeham-Schroeder protocol to connect 2 clients together for a secure connected chat.
-* client.py: This will serve as the connection client A (e.g. Alice) uses to connect to the KDC for communication. It will connect the user to the KDC using Diffie-Hellma and later allow the user to connect to other users.
-* clientB.py: This will serve as the connection client B (e.g. Bob) uses to connect to the KDC for communication. It will allow the user to connect to other users using Nedeham-Schroeder for a secure communication
+* server.py: This will serve as our main server for this cryptosystem, and will act as our Key Distribution Center (KDC). The server will have the ability to use Diffie-Hellman to create trusted session keys with each client that connects to it, as well as perform the Needham-Schroeder protocol to connect 2 clients together for a secure connected chat.
+* client.py: This will serve as the connection client A (e.g. Alice) uses to connect to the KDC for communication. It will connect the user to the KDC using Diffie-Hellman and later allow the user to connect to other users.
+* clientB.py: This will serve as the connection client B (e.g. Bob) uses to connect to the KDC for communication. It will allow the user to connect to other users using Needham-Schroeder for a secure communication
 
 ### Running The Code
 
@@ -44,8 +44,8 @@ This will initiate the Diffie-Hellman protocol and create a session key between 
 
 The user will have instructions displayed on the terminal screen, telling you what their options are (note: all commands are case insensitive):
 
-- `'quit'` allows the user to quit the application and be disconnected from the serber
-- `'list'` will list out all currently connected users. It will include you as well by displaying a "YOU" in the respectibe row
+- `'quit'` allows the user to quit the application and be disconnected from the server
+- `'list'` will list out all currently connected users. It will include you as well by displaying a "YOU" in the respective row
 - `'connect|id'` allows the user to request to connect to the user specified by "id"
 
 Now, run the client.py file
@@ -58,12 +58,12 @@ This will initiate the Diffie-Hellman protocol and create a session key between 
 
 The user will have instructions displayed on the terminal screen, telling you what their options are (note: all commands are case insensitive):
 
-- `'quit'` allows the user to quit the application and be disconnected from the serber
+- `'quit'` allows the user to quit the application and be disconnected from the server
 - `'wait'` will create a "waiting period" in which B waits for A to initiate the KDC protocol
 
 ### Overview/Simplified Instructions
 
-To easily run the program, run the `'server.py'` file first. Next, run  `'clientB.py'`and selected the  `'wait'` command. Next, run  `'client.py'` and select  `'list'` to see who is currently connected. You will see a  `'00000001'` option. To initiate communication with that user, type " `'connect|00000001'`". This will create the secure connection using Nedeham-Schroeder and the terminals for  `'client.py'` and  `'clientB.py'` will now serve as a secure chat.
+To easily run the program, run the `'server.py'` file first. Next, run  `'clientB.py' `and selected the  `'wait'` command. Next, run  `'client.py'` and select  `'list'` to see who is currently connected. You will see a  `'00000001'` option. To initiate communication with that user, type " `'connect|00000001'`". This will create the secure connection using Needham-Schroeder and the terminals for  `'client.py'` and  `'clientB.py'` will now serve as a secure chat.
 
 ### How Diffie Hellman is Used
 
@@ -79,7 +79,7 @@ The following steps are used for this procedure:
 
 From properties of modulus, B<sup>a</sup> = A<sup>b</sup>. This is because A<sup>b</sup> mod p = g<sup>ab</sup> mod p = g<sup>ba</sup> mod p = B<sup>a</sup> mod p. In other words, (g<sup>a</sup>  mod p)<sup>b</sup> mod p = (g<sup>b</sup>  mod p)<sup>a</sup> mod p.
 
-It should also be noted that only a,b, and g<sup>ab</sup> mod p = g<sup>ba</sup> mod p are keps secret. All the other values (p,g, g<sup>a</sup> mod p, g<sup>b</sup> mod p ), are public. This is an example of the discrete logarithm problem. For small numbers like these, the shared key can be computed. However, for primes of at least 600 digits,
+It should also be noted that only a,b, and g<sup>ab</sup> mod p = g<sup>ba</sup> mod p are kept secret. All the other values (p,g, g<sup>a</sup> mod p, g<sup>b</sup> mod p ), are public. This is an example of the discrete logarithm problem. For small numbers like these, the shared key can be computed. However, for primes of at least 600 digits,
 
 ### How Needham Schroeder is Used
 
@@ -94,7 +94,7 @@ The Needham-Schroeder can be split up into 6 main steps:
 
 ### Security from Replay Attacks
 
-The typical Needham-Schroeder protocol is vulnerable to a replay attack if an old session key has been compromised. To combat this, this implementation uses a odified version of the Neuman 93 protocol (similar to the Denning 81 protocol's timestamp implementation but it uses a nonce) . This involves adding a second nonce when the KDC sends the information back to the requesting user. By adding this bit of randomness to our string, we make it much harder to reverse our encryption, and thus prevent replay attacks.
+The typical Needham-Schroeder protocol is vulnerable to a replay attack if an old session key has been compromised. To combat this, this implementation uses a modified version of the Neuman 93 protocol (similar to the Denning 81 protocol's timestamp implementation but it uses a nonce) . This involves adding a second nonce when the KDC sends the information back to the requesting user. By adding this bit of randomness to our string, we make it much harder to reverse our encryption, and thus prevent replay attacks.
 
 ### References
 
