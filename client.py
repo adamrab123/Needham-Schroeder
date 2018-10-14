@@ -12,6 +12,7 @@ PORT = 5010
 KDC_key = None
 MyId = None
 
+#method for printing the options for the client
 def printMenuOptions():
     print("Options:")
     print("\t Enter 'quit' to exit")
@@ -26,6 +27,7 @@ def random10bit():
 		num += str(rand)
 	return int(num,2)
 
+#method that creates a random 10 bit number as a string to serve as our nonce
 def nonceGenerator():
 	num = ""
 	for i in range(10):
@@ -33,38 +35,46 @@ def nonceGenerator():
 		num += str(rand)
 	return num
 
+#method that performs the NS protocol
 def needhamSchroeder(soc):
+    #receiving the package from step 2
     message = soc.recv(1024).decode('utf8')
 
-
+    #decrypting the message
     decrypedMessage = library.decrypt(message,KDC_key)
     Ks = decrypedMessage[0:10]
     IDb = decrypedMessage[10:18]
     T = decrypedMessage[18:28]
     smallEncryption = decrypedMessage[28:]
-
+    #now we connect to the harcoded channel client 2 is waiting for us to connect to
     mySocket = socket.socket()
     mySocket.connect((HOST,PORT))
-
+    #sending over step 3 to Bob
     mySocket.send(smallEncryption.encode())
-
+    #receiving step 4 from Bob
     newNonce = mySocket.recv(1024).decode()
-
+    #decrypting step 4
     decryptedNonce = library.decrypt(newNonce,Ks)
+    #turning it into and int
     changedNonce = int(decryptedNonce,2)
+    #subtracting 1: this si the F function that is predetermined by Alice and Bob
     changedNonce = changedNonce - 1
+    #turning it back into a binary string
     changedNonce = bin(changedNonce)[2:].zfill(10)
-
+    #encrypting f(nonce)
     encryptedNonce = library.encrypt(changedNonce, Ks)
+    #sending step 5 to Bob
     mySocket.send(encryptedNonce.encode())
-
+    
+    #if Bob received the anticipated differentiation in nonce value
+    #using the same encryption/decryption key..... 
+    #We now have a secure chat!
     if mySocket.recv(1024).decode() == "VERIFIED":
         while message != 'q':
 
             message = input("Enter the message you want to encrypt -> ")
             #encrypting the message using DES
             finalEncryptedMessage = library.encrypt(message,Ks)
-            # print("Encrypted message = " + finalEncryptedMessage)
 
             #encrypting the message
             #sending the message
@@ -128,27 +138,29 @@ def main():
     Key = random10bit()
     diffieHelman(soc,Key)
 
-    #print the user options
-
 
     while True:
+        #print the user options
         printMenuOptions()
         message = input(" -> ")
+        
         
         if 'connect' in message:
             print("trying to connect")
             otherUser = message.split("|")[1]
+            #this is for the server-side backend
             message = 'connect|' + MyId + otherUser + nonceGenerator()
             
-        
         soc.send(message.encode("utf8"))
 
         if 'connect' in message:
+            #go up to the NS method and start the interaction
             needhamSchroeder(soc)
 
         if message == "quit":
             break
 
+        #showing the user available other users to connect to
         if message == "list":
             soc.send(message.encode("utf8"))
             userList = soc.recv(1024).decode('utf8')

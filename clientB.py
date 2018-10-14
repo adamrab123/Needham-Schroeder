@@ -4,6 +4,9 @@ import random
 import des
 import library
 
+# This will serve as Bob in the NS Protocol
+
+
 #for the purpose of this assignment, both clients know these
 HOST = "127.0.0.1"
 PORT = 5010
@@ -11,6 +14,7 @@ PORT = 5010
 KDC_key = None
 MyId = None
 
+#method for printing the options for the client
 def printMenuOptions():
     print("Options:")
     print("\t Enter 'quit' to exit")
@@ -24,6 +28,7 @@ def random10bit():
 		num += str(rand)
 	return int(num,2)
 
+#method that creates a random 10 bit number as a string to serve as our nonce
 def nonceGenerator():
 	num = ""
 	for i in range(10):
@@ -44,11 +49,9 @@ def diffieHelman(kdc, PrivateKey):
     global MyId
     MyId = message[0]
 
-
     #receives the first calculation
     #call this X
     A = int(kdc.recv(1024).decode('utf8'))
-
 
     #generate 10 bit key for KDC
     #call this a
@@ -65,6 +68,8 @@ def diffieHelman(kdc, PrivateKey):
     S = (A**b)%publicP
     global KDC_key
     KDC_key = bin(S)[2:].zfill(10)
+    #printing here is only for the sake of this assignment
+    #would not get done in real life
     print("Established key = ", str(S))
 
 
@@ -143,12 +148,6 @@ def main():
                     #prints the pretty loading bar
                     #sending the message
                     conn.send(finalEncryptedMessage.encode())
-
-
-            
-
-            
-
 
     soc.send(b'--quit--')
 

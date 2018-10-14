@@ -7,6 +7,9 @@ from time import sleep
 import des
 import library
 
+#This will serve as Alice in the NS protocol
+
+# method that creates a random 10 bit key
 def random10bit():
 	num = ""
 	for i in range(10):
@@ -14,6 +17,7 @@ def random10bit():
 		num += str(rand)
 	return int(num,2)
 
+#method that creates a random 10 bit number as a string to serve as our nonce
 def nonceGenerator():
 	num = ""
 	for i in range(10):
@@ -24,52 +28,44 @@ def nonceGenerator():
 def main():
     start_server()
 
+#dictionary that keeps track of the keys for each user
 userKeys = dict()
-
+#dictionary that keeps track of the ids and connections of each user
 connections = dict()
+#used for giving users unique ids
 numberOfUsers = 0
+#relatively prime numbers picked
 PublicP = 23
 PublicG = 5
 
-# def needhamSchroeder(connection,otherUser):
-#     print("ENTERED NS")
-#     print(connection)
-#     # connection.send("entered".encode())
-#     message = connection.recv(1024).decode('utf8')
-#     # message = connection.recv(1024).decode('utf8')
-#     print("message = ", message)
-
 def needhamSchroeder(package, packageConnection):
+    #receinving the contents from step 1
+    #package is IDA||IDB||N1
     IDa = package[:8]
-    print("IDa = ", IDa)
     IDaAsInt = int(IDa)
     IDaAsBinary = bin(IDaAsInt)[2:].zfill(8)
     
-
     IDb = package[8:16]
-    print("IDb = ", IDb)
     IDbAsInt = int(IDa)
     IDbAsBinary = bin(IDaAsInt)[2:].zfill(8)
     nonce = package[16:]
-    print("nonce = ", nonce)
 
     AsKey = userKeys[IDa]
     BsKey = userKeys[IDb]
 
     Ks = nonceGenerator()
     T = nonceGenerator()
+    #creating the smaller envelope
     messageToBeEncrypted = Ks + IDaAsBinary + T
     encryptedMessage = library.encrypt(messageToBeEncrypted,BsKey)
-    print(encryptedMessage)
 
+    #creating the bigger envelop
     nextMessage = Ks + IDbAsBinary + T + encryptedMessage
     finalEncryptedMessage = library.encrypt(nextMessage,AsKey)
 
     return finalEncryptedMessage
 
-
-
-
+#method for initiating DH with each connected user
 def diffieHelman(client):
     print("Initiating Diffie Hellman Connection with client")
 
@@ -96,8 +92,6 @@ def diffieHelman(client):
 
     #receives the client calculation
     B = int(client.recv(1024).decode('utf8'))
-    # print("B : ", B)
-    # print("now here")
     #do final calculation to get shared key
     #S = B^a mod p
     S = (B**a)%PublicP
@@ -106,7 +100,7 @@ def diffieHelman(client):
 
 def start_server():
     host = "127.0.0.1"
-    port = 5000         # arbitrary non-privileged port
+    port = 5000   # arbitrary non-privileged port
 
     soc = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     soc.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)   # SO_REUSEADDR flag tells the kernel to reuse a local socket in TIME_WAIT state, without waiting for its natural timeout to expire
@@ -118,14 +112,15 @@ def start_server():
         print("Bind failed. Error : " + str(sys.exc_info()))
         sys.exit()
 
-    soc.listen(5) # queue up to 5 requests
+    soc.listen(2) # queue up to 5 requests
     print("Socket now listening...")
 
-    # infinite loop- do not reset for every requests
+    # infinite loop-do not reset for every requests
     while True:
         connection, address = soc.accept()
         ip, port = str(address[0]), str(address[1])
         if connection.getpeername() not in connections.keys():
+            #delegates a unique id for each joining user
             global numberOfUsers 
             numberOfUsers += 1
             connections[connection.getpeername()] = str(numberOfUsers).zfill(8)
@@ -134,8 +129,7 @@ def start_server():
         except:
             print("Thread did not start.")
             traceback.print_exc()
-        
-            
+        #printing which user connected
         user = connections[connection.getpeername()]
         print("\nUser " + str(user) + " connected with " + ip + " on port " + port)
     soc.close()
@@ -143,6 +137,7 @@ def start_server():
 
 def client_thread(connection, ip, port, max_buffer_size = 5120):
     is_active = True
+    #as soon as a user connects we initiated DH
     diffieHelman(connection)
 
     while is_active:
@@ -150,12 +145,12 @@ def client_thread(connection, ip, port, max_buffer_size = 5120):
         print("client input = ", client_input)
         user = connections[connection.getpeername()]
         if "quit" in client_input:
-            # print(connections[connection.getpeername()])
             connections[connection.getpeername()] = None
             connection.close()
             print("User " + str(user) + " CLOSED their connection")
             is_active = False
         elif 'list' in client_input:
+            #user wants to see what other users they can connect to
             output = ""
             print(connection.getpeername())
             if len(connections)==1:
@@ -173,21 +168,13 @@ def client_thread(connection, ip, port, max_buffer_size = 5120):
                         output += "YOU \n"
                 print("output: ",output)
                 connection.send(output.encode())
-            # connection.sendall("-".encode("utf8"))
         elif 'connect' in client_input:
-            # print("TRYING TO START NEEDHAM SCHROEDER")
-            # print(client_input)
+
             package = client_input.split("|")[1]
             messageToA = needhamSchroeder(package,connection)
-            # print("message to A = ", messageToA)
+
             connection.send(messageToA.encode())
-            # print(connections)
-            # print("client input = ", client_input)
-            # otherUser = client_input.split("|")[1]
-            # print("sanity")
-            # message = connection.recv(1024).decode('utf8')
-            # print("message = ", message)
-            # # needhamSchroeder(connection,otherUser)
+
         else:
             print("User " + str(user) + " sent: {}".format(client_input))
             connection.sendall("-".encode("utf8"))
