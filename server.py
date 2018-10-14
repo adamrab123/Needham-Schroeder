@@ -169,17 +169,18 @@ def client_thread(connection, ip, port, max_buffer_size = 5120):
                 print("output: ",output)
                 connection.send(output.encode())
         elif 'connect' in client_input:
-
+            #we need to get the part after "connect|...."
             package = client_input.split("|")[1]
+            #find the message you want to send to A
             messageToA = needhamSchroeder(package,connection)
-
+            #send to A and now the KDC's job is done
             connection.send(messageToA.encode())
 
         else:
             print("User " + str(user) + " sent: {}".format(client_input))
             connection.sendall("-".encode("utf8"))
 
-
+#wrapper for making sure incoming input is good
 def receive_input(connection, max_buffer_size):
     client_input = connection.recv(max_buffer_size)
     client_input_size = sys.getsizeof(client_input)

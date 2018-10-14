@@ -117,27 +117,30 @@ def main():
             conn, addr = mySocket.accept()
             print ("Connection from: " + str(addr))
 
+            #this means that Alice has initiated NS with the KDC and has now
+            #sent us an encrypted envelope with a session key
             package = conn.recv(1024).decode()
 
+            #we decrypte it
             decryptedPackage = library.decrypt(package,KDC_key)
             Ks = decryptedPackage[:10]
             IDa = decryptedPackage[10:18]
             nonce = decryptedPackage[18:]
-
+            #now we send back an an encrypted nonce
             newNonce = nonceGenerator()
-
             encryptedNonce = library.encrypt(newNonce,Ks)
             conn.send(encryptedNonce.encode())
 
+            # we get an encrypted altered nonce from A
             incomingChangedNonce = conn.recv(1024).decode()
             changedIncomingNonce = library.decrypt(incomingChangedNonce,Ks)
 
+            #if the difference is what we expect (pre-determined), then....
+            #we now have a secure encrypted communication!
             if int(changedIncomingNonce,2) == int(newNonce,2) - 1:
                 conn.send("VERIFIED".encode())
                 while True:
-
                     data = conn.recv(1024).decode()
-
                     decryptedMessage = library.decrypt(data,Ks)
                     if not data:
                             break
